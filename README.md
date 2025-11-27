@@ -1,13 +1,11 @@
-# home-server
-
 🏠 Home Server Setup
 
 A container-based personal cloud powered by Ubuntu Server, CasaOS, Nextcloud, Immich, AdGuard, Tailscale, and SSH
 
 📘 Introduction
 
-This project sets up a secure and extensible home server using Ubuntu Server, managed with CasaOS, and enhanced with private cloud tools such as Nextcloud, Immich, and AdGuard Home.
-Remote access is enabled using Tailscale, and administrative control is available through secure SSH.
+This project documents the setup of a secure and extensible home server using Ubuntu Server, managed with CasaOS, and extended with services such as Nextcloud, Immich, AdGuard Home, and Tailscale for secure remote access.
+SSH is used for administration, and all services run in Docker containers.
 
 📑 Table of Contents
 
@@ -18,18 +16,6 @@ Hardware
 Architecture Overview
 
 Installation
-
-Ubuntu Server
-
-SSH Setup
-
-Docker
-
-CasaOS
-
-Tailscale
-
-Application Stack
 
 Usage
 
@@ -49,21 +35,21 @@ License
 
 ✨ Features
 
-CasaOS Dashboard – User-friendly UI for managing containers and storage.
+CasaOS dashboard for managing containers
 
-Nextcloud – Personal cloud for files, contacts, notes, and sync.
+Nextcloud for personal cloud storage
 
-Immich – High-performance photo and video backup platform.
+Immich for photo and video backup
 
-AdGuard Home – Network-wide ad & tracker blocking.
+AdGuard Home for network-wide ad blocking
 
-Tailscale – Zero-config secure remote access over WireGuard.
+Tailscale for secure remote access using WireGuard
 
-SSH – Direct secure shell access for system maintenance.
+SSH access for server control
 
-Containerized Architecture – Simple updates, rollbacks, and backups.
+Fully containerized deployment
 
-Local or remote access – Safe connections from anywhere using Tailscale.
+Local or remote access through Tailscale
 
 🖥 Hardware
 
@@ -75,65 +61,54 @@ RAM: 8 GB
 
 Storage: 2 TB HDD
 
-OS: Ubuntu Server (LTS recommended)
+OS: Ubuntu Server LTS
 
 Network: Gigabit Ethernet
 
 🏗 Architecture Overview
-                             ┌───────────────────────────┐
-                             │       Ubuntu Server        │
-                             └───────┬─────────┬─────────┘
-                                     │         │
-                             Secure SSH      Tailscale VPN
-                                     │         │
-                           Container Engine (Docker)
-                                     │
-     ┌───────────────────┬─────────────────────┬─────────────────────┐
-     │                   │                     │                     │
-┌──────────────┐   ┌───────────────┐   ┌────────────────┐    ┌─────────────────┐
-│   CasaOS     │   │   Nextcloud   │   │     Immich      │    │  AdGuard Home   │
-└──────────────┘   └───────────────┘   └────────────────┘    └─────────────────┘
+                             Ubuntu Server
+                     ┌──────────────┬──────────────┐
+                     │              │              │
+                   SSH         Tailscale VPN   Docker Engine
+                                                  │
+       ┌───────────────────┬───────────────┬───────────────┬────────────────┐
+       │                   │               │                │                │
+    CasaOS            Nextcloud         Immich        AdGuard Home      + more
 
 🛠 Installation
 1. Install Ubuntu Server
 
-Download and install Ubuntu Server LTS.
-
-Enable OpenSSH Server during installation.
-
-Update packages:
+Update the system:
 
 sudo apt update && sudo apt upgrade -y
 
+
+Enable OpenSSH Server during installation or run:
+
+sudo apt install openssh-server
+
 2. Enable Secure SSH
 
-SSH is essential for remote administration.
-
 Check SSH status:
+
 sudo systemctl status ssh
 
-(Optional) Change default SSH port:
+
+(Optional) Change SSH port:
+
 sudo nano /etc/ssh/sshd_config
 
 
-Edit:
+Recommended changes:
 
 Port 2222
 PasswordAuthentication no
+PermitRootLogin no
 
 
-Then reload:
+Reload:
 
 sudo systemctl reload ssh
-
-Recommended Security:
-
-Disable root login
-
-Use SSH keys only
-
-Allow LAN + Tailscale traffic only via firewall
-(Ask if you want these rules auto-generated.)
 
 3. Install Docker & Docker Compose
 sudo apt install docker.io docker-compose -y
@@ -143,144 +118,120 @@ sudo systemctl enable --now docker
 curl -fsSL https://get.casaos.io | sudo bash
 
 
-Open UI:
+Access at:
 http://<server-ip>
 
 5. Install Tailscale
-
-Tailscale enables secure remote access without port forwarding.
-
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up
 
-Optional recommended flags:
-sudo tailscale up --ssh --accept-routes --accept-dns
 
+For enhanced features:
 
---ssh: allows remote SSH via Tailscale identity
+sudo tailscale up --ssh --accept-dns --accept-routes
 
---accept-routes: use subnet routing if configured
+6. Install Apps (via CasaOS or Docker Compose)
 
---accept-dns: allow MagicDNS
-
-After setup, you can reach your server remotely using:
-
-ssh ubuntu@<TAILSCALE-IP>
-
-6. Install Applications
-
-Services installed via CasaOS or Docker Compose:
-
-Nextcloud
-
-Immich
-
-AdGuard Home
-
-Example Nextcloud command:
+Nextcloud example:
 
 docker run -d --name nextcloud -p 8080:80 -v nc_data:/var/www/html nextcloud
 
+
+AdGuard Home example:
+
+docker run -d --name adguardhome -p 53:53/tcp -p 53:53/udp -p 3000:3000 adguard/adguardhome
+
+
+Immich is best installed using a full docker-compose bundle.
+
 🚀 Usage
-Accessing Services (Local or via Tailscale IP)
+Accessing Services
 Service	URL
 CasaOS	http://<server-ip>
 Nextcloud	http://<server-ip>:8080
 Immich	http://<server-ip>:2283
 AdGuard Home	http://<server-ip>:3000
 SSH Access
-ssh <username>@<server-ip>
+ssh <user>@<server-ip>
 
-Remote SSH via Tailscale
-ssh <username>@<tailscale-ip>
+SSH via Tailscale (remote)
+ssh <user>@<tailscale-ip>
 
 🔐 Tailscale Remote Access
 
-Tailscale adds:
+Tailscale enables:
 
-Encrypted WireGuard connectivity
+Encrypted remote access
 
-No need for port forwarding
+No port forwarding
 
-Use MagicDNS:
+MagicDNS support
 
-ssh ubuntu@servername.tailnet-name.ts.net
+Built-in SSH authentication
 
-Optional Enhancements
+Connect using:
 
-Enable server as a Tailscale Exit Node
-
-Restrict SSH to Tailscale only
-
-Use ACLs to limit access by device or user
-
-Add subnet router mode to expose LAN services remotely
-
-I can add any of these to the README on request.
+ssh <user>@servername.tailnet-name.ts.net
 
 ⚙ Service Configuration
 Nextcloud
 
-Accessible via port 8080
+Store user data in a Docker volume
 
-Use external storage if desired (HDD/SSD)
+Add apps for contacts, calendar, notes
 
-Optional: add Redis cache for performance
+Optional: add Redis caching for performance
 
 Immich
 
-Ideal for photo backup from mobile devices
+Ideal for mobile photo backups
 
-Recommend mounting a dedicated photos volume
+Connect mobile app to server via Tailscale or LAN
 
 AdGuard Home
 
-Set router DNS → server IP
+Set your router’s DNS to the server IP
 
-Add blocklists (StevenBlack, OISD)
+Add recommended blocklists like OISD
 
 📦 Dependencies
 
 Ubuntu Server LTS
 
-Docker
-
-Docker Compose
+Docker + Docker Compose
 
 CasaOS
 
 Tailscale
 
-Containers:
+Nextcloud container
 
-Nextcloud
+Immich container
 
-Immich
-
-AdGuard Home
+AdGuard Home container
 
 📘 Examples
-Restart full stack:
+Restart all containers:
 docker compose down && docker compose up -d
 
-Backup Nextcloud data:
-sudo tar -czvf nextcloud_backup.tar.gz /var/lib/docker/volumes/nc_data
+Backup volumes:
+sudo tar -czvf backups.tar.gz /var/lib/docker/volumes
 
-Connect via Tailscale:
+Check Tailscale connection:
 tailscale status
 
 🧰 Troubleshooting
-Issue	Fix
-Can't SSH remotely	Ensure Tailscale is running, check firewall
-Slow performance	Use SSD for Nextcloud / Immich data
-AdGuard not blocking	Router DNS not updated
-Immich upload errors	Check database container or memory usage
+Issue	Solution
+Can't SSH remotely	Ensure Tailscale is connected & firewall allows traffic
+Slow Nextcloud	Move to SSD or add caching
+AdGuard not blocking ads	Router DNS not updated
+Immich upload errors	Check RAM usage or database container
 👥 Contributors
 
-You – Server builder & owner
+You — Creator of the home server
 
-ReadMeGen – README generator
+ReadMeGen — README generation assistant
 
 📄 License
 
-Choose any license. MIT or GPL are common choices.
+Choose any license (MIT, GPL, etc.) based on your preference.
