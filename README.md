@@ -281,5 +281,5 @@ Ken
 ---
 
 ## 📄 License
-No licensse
+No licenses
 
